@@ -1,6 +1,6 @@
 # PayFlow USDT Local Demo
 
-Local-first learning project for a USDT payment system, based on the roadmap in [README-usdt-payment-system.md](./README-usdt-payment-system.md).
+Local-first learning project for a USDT payment system.
 
 ## Stack
 
