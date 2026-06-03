@@ -1,7 +1,7 @@
 "use client";
 
 import type { CheckoutInvoice } from "@payflow/shared";
-import { Copy, RefreshCcw, Wallet } from "lucide-react";
+import { Copy, Info, RefreshCcw, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { apiGet } from "../lib/api";
@@ -145,11 +145,11 @@ export function CustomerOrderClient({ invoiceId }: { invoiceId: string }) {
           <div style={{ marginTop: 32 }}>
             <div className="actor-kicker" style={{ marginBottom: 16 }}>Live Payment Status</div>
             <div className="flow-strip" style={{ gap: 8 }}>
-              <MiniStep done={Boolean(invoice.lastTxHash)} title="Detected" />
-              <MiniStep done={(invoice.confirmations ?? 0) > 0} title="Confirming" />
-              <MiniStep done={Boolean(walletExplain?.latestGasTopUp)} title="Gas top-up" />
-              <MiniStep done={Boolean(walletExplain?.latestSweep)} title="Swept" />
-              <MiniStep done={paymentReady} title="Success" />
+              <MiniStep done={Boolean(invoice.lastTxHash)} title="Detected" description="EVM transaction seen on the blockchain network." />
+              <MiniStep done={(invoice.confirmations ?? 0) > 0} title="Confirming" description="Waiting for minimum block confirmations for finality." />
+              <MiniStep done={Boolean(walletExplain?.latestGasTopUp)} title="Gas top-up" description="Backend transfers native ETH to the deposit address to cover sweep gas fees." />
+              <MiniStep done={Boolean(walletExplain?.latestSweep)} title="Swept" description="USDT is securely swept from the deposit address to the merchant's hot wallet." />
+              <MiniStep done={paymentReady} title="Success" description="Payment is finalized and order is complete." />
             </div>
           </div>
         </div>
@@ -167,10 +167,10 @@ function InfoLine({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function MiniStep({ done, title }: { done: boolean; title: string }) {
+function MiniStep({ done, title, description }: { done: boolean; title: string; description: string }) {
   return (
     <div 
-      className={`flow-step ${done ? "done active" : ""}`} 
+      className={`flow-step tooltip-container ${done ? "done active" : ""}`} 
       style={{ 
         display: "flex", 
         flexDirection: "column", 
@@ -180,7 +180,8 @@ function MiniStep({ done, title }: { done: boolean; title: string }) {
         padding: "16px 8px",
         background: done ? "rgba(30, 169, 91, 0.08)" : "transparent",
         borderColor: done ? "rgba(30, 169, 91, 0.3)" : "var(--line)",
-        borderStyle: done ? "solid" : "dashed"
+        borderStyle: done ? "solid" : "dashed",
+        cursor: "help"
       }}
     >
       <div style={{ 
@@ -200,10 +201,16 @@ function MiniStep({ done, title }: { done: boolean; title: string }) {
         fontSize: "0.85rem", 
         fontWeight: done ? 600 : 500, 
         color: done ? "var(--green-deep)" : "var(--text-soft)",
-        lineHeight: 1.2
+        lineHeight: 1.2,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 4
       }}>
         {title}
+        <Info size={14} style={{ opacity: 0.6 }} />
       </div>
+      <div className="tooltip-text">{description}</div>
     </div>
   );
 }
