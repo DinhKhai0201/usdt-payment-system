@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  WAITING_PAYMENT
+  CONFIRMING
+  PARTIALLY_PAID
+  PAID
+  OVERPAID
+  EXPIRED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum DepositStatus {
+  DETECTED
+  CONFIRMED
+  FAILED
+}
+
+enum LedgerDirection {
+  CREDIT
+  DEBIT
+}
+
+model Merchant {
+  id        String        @id @default(cuid())
+  name      String
+  email     String        @unique
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  invoices  Invoice[]
+  ledger    LedgerEntry[]
+}
+
+model Invoice {
+  id                  String               @id @default(cuid())
+  invoiceNumber       String               @unique
+  customerName        String
+  customerEmail       String?
+  amountCents         Int
+  asset               String               @default("USDT")
+  network             String
+  description         String?
+  paymentAddress      String
+  status              InvoiceStatus        @default(PENDING)
+  expiresAt           DateTime
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  paidAt              DateTime?
+  merchantId          String
+  detectedAmountCents Int                  @default(0)
+  merchant            Merchant             @relation(fields: [merchantId], references: [id])
+  deposits            DepositTransaction[]
+  ledgerEntries       LedgerEntry[]
+}
+
+model DepositTransaction {
+  id                 String        @id @default(cuid())
+  invoiceId          String
+  network            String
+  txHash             String
+  fromAddress        String
+  toAddress          String
+  amountCents        Int
+  confirmations      Int           @default(0)
+  status             DepositStatus @default(DETECTED)
+  detectedAt         DateTime      @default(now())
+  confirmedAt        DateTime?
+  rawPayload         String?
+  invoice            Invoice       @relation(fields: [invoiceId], references: [id])
+
+  @@unique([network, txHash])
+}
+
+model LedgerEntry {
+  id         String          @id @default(cuid())
+  merchantId String
+  invoiceId  String
+  entryType  String
+  amountCents Int
+  asset      String
+  network    String
+  direction  LedgerDirection
+  status     String
+  createdAt  DateTime        @default(now())
+  merchant   Merchant        @relation(fields: [merchantId], references: [id])
+  invoice    Invoice         @relation(fields: [invoiceId], references: [id])
+}
+

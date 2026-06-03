@@ -1,0 +1,22 @@
+{
+  "name": "usdt-payment-system",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace @payflow/api\" \"npm run dev --workspace @payflow/web\"",
+    "build": "npm run build --workspace @payflow/shared && npm run build --workspace @payflow/api && npm run build --workspace @payflow/web",
+    "db:generate": "node -e \"console.log('Local file database is initialized automatically on first API start.')\"",
+    "db:push": "node -e \"console.log('No schema push needed. Local file database is initialized automatically.')\"",
+    "seed": "npm run seed --workspace @payflow/api",
+    "test:contracts": "forge test",
+    "lint": "npm run lint --workspace @payflow/api && npm run lint --workspace @payflow/web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3"
+  }
+}

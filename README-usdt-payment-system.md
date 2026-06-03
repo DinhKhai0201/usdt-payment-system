@@ -6,6 +6,8 @@ This repository is designed as a portfolio project for developers who want to un
 
 > This project is for learning, portfolio, and interview preparation. If you build a real payment product, you must check legal, tax, AML, KYC, accounting, and compliance requirements in your country.
 
+> **Current Implementation State:** This repository has been fully upgraded to a **Real EVM Flow**. It runs a local blockchain (`anvil`), securely generates HD wallets for deposit addresses using `ethers.js`, accepts real MetaMask transactions, and watches the blockchain for `Transfer` events to automatically settle invoices.
+
 ---
 
 ## 1. Project Goal
@@ -25,6 +27,65 @@ The system should support:
 - Basic security and risk controls
 
 The goal is not only to “receive USDT”. The goal is to design a system that looks like a real payment product.
+
+Important architecture note:
+
+- In a normal USDT payment system, the customer does not pay through a custom smart contract created by your product
+- The customer sends USDT directly to a deposit address controlled by the system
+- The backend watcher monitors incoming token transfers and matches them to invoices
+- Usually, each invoice or order should have its own deposit address for easier reconciliation
+
+---
+
+## 1.1 How Orders Map to Wallet Addresses
+
+This is one of the most important parts of the system design.
+
+If you use one shared wallet address for every customer and every order, reconciliation becomes hard:
+
+- multiple users may send the same amount
+- users may send at nearly the same time
+- users may send partial amounts
+- users may send extra amounts
+- exchange withdrawals may arrive late
+
+Because of that, a practical payment gateway usually does this:
+
+```txt
+1. Merchant creates order or invoice in the Web2 system
+2. Backend creates payment_intent
+3. Backend assigns a unique deposit address for that order
+4. Customer sends USDT to that address
+5. Watcher sees money arrive at that address
+6. System maps that address back to the exact order
+```
+
+So the receiving wallet for each order is:
+
+```txt
+not one shared public address for everything
+but one deposit address assigned to that invoice or order
+```
+
+Those addresses are usually generated from:
+
+```txt
+- an HD wallet
+- a custody system
+- an internal address pool
+```
+
+You can think of it like this:
+
+```txt
+One wallet system
+        ↓
+Many child deposit addresses
+        ↓
+Each address linked to one invoice
+```
+
+Later, the operator can sweep funds from deposit addresses into a hot wallet or treasury wallet.
 
 ---
 
@@ -60,20 +121,20 @@ Start with one network first.
 Recommended MVP network:
 
 ```txt
-USDT TRC20 on Tron
+USDT ERC20 on Ethereum (or local EVM)
 ```
 
-Why TRC20 first?
+Why ERC20 first?
 
-- Many users already use it
-- Transaction fees are usually lower than Ethereum mainnet
-- Common for USDT transfers
-- Easier for payment-style user behavior
+- Extremely common and widely supported
+- Easy to develop and test locally using EVM tools like Foundry/Anvil
+- Easy to simulate with local wallets for demo purposes
+- Standard for most DeFi and institutional volume
 
 Later, add:
 
 ```txt
-USDT ERC20 on Ethereum
+USDT TRC20 on Tron
 USDT BEP20 on BNB Chain
 USDT on Polygon
 USDT on Arbitrum
@@ -179,7 +240,7 @@ Admin can:
 
 ```txt
 1. Merchant creates invoice
-2. System generates payment address and amount
+2. System assigns a unique deposit address and amount
 3. Customer scans QR code
 4. Customer sends USDT
 5. Backend watches blockchain
@@ -218,6 +279,19 @@ Backend updates invoice status
 Frontend shows payment success
         ↓
 Merchant balance is updated
+```
+
+### Important Clarification
+
+The payment flow usually does not require your project to deploy a custom payment smart contract.
+
+Instead:
+
+```txt
+- USDT already exists as a token contract on the network
+- customer transfers USDT directly to a deposit address
+- watcher monitors token transfers to known addresses
+- backend matches the deposit address to the invoice
 ```
 
 ---
@@ -315,7 +389,7 @@ Fields:
 Customer email
 Amount in USD
 Accepted asset: USDT
-Network: TRC20 / ERC20 / BEP20
+Network: ERC20 / TRC20 / BEP20
 Description
 Expiration time
 ```
@@ -606,13 +680,35 @@ updated_at
 ```txt
 id
 merchant_id
+invoice_id
 network
 address
 address_type
 status
+derivation_path
+assigned_at
+last_seen_at
 created_at
 updated_at
 ```
+
+Suggested meaning:
+
+```txt
+address_type = DEPOSIT / HOT / TREASURY
+```
+
+For the invoice flow, the most important one is:
+
+```txt
+DEPOSIT address
+```
+
+This lets the system know:
+
+- which address was shown to the customer
+- which invoice owns that address
+- which transfer should update which order
 
 ### LedgerEntry
 
@@ -712,7 +808,7 @@ The watcher is responsible for detecting incoming USDT payments.
 - Connect to blockchain node or provider API
 - Scan new blocks
 - Detect USDT Transfer events
-- Match receiver address with invoice address
+- Match receiver address with assigned deposit address
 - Match amount with invoice amount
 - Wait for required confirmations
 - Prevent duplicate processing
@@ -728,11 +824,24 @@ Every few seconds:
   2. Scan new blocks
   3. Find USDT Transfer events
   4. Check if to_address belongs to system
-  5. Match invoice
+  5. Find which invoice owns that deposit address
   6. Validate amount
   7. Save transaction
   8. Update invoice status
 ```
+
+### Why Unique Deposit Addresses Matter
+
+If many invoices share one address, the system may not know which order was paid.
+
+Unique deposit addresses make it easier to handle:
+
+- same amount paid by different users
+- multiple payments at the same minute
+- partial payment
+- overpayment
+- delayed transfers from exchanges
+- cleaner reconciliation and audit trails
 
 ### Required Confirmations
 
@@ -842,6 +951,7 @@ For portfolio, you can design the architecture without holding real funds.
 - Check duplicate tx hash
 - Check invoice expiration
 - Check address ownership
+- Do not rely only on amount matching when one shared address is used
 ```
 
 ---
@@ -1060,6 +1170,7 @@ The payment page clearly warns users about network mismatch because crypto payme
 ```txt
 The system can support multiple networks by using a network adapter pattern.
 Each network has its own scanner, confirmation rule, and token contract configuration.
+Each network can also have its own address derivation and deposit wallet strategy.
 ```
 
 ---
@@ -1160,7 +1271,7 @@ Ledger entry is created
 | Invoice #INV-1024                               |
 |-------------------------------------------------|
 | Amount: 100 USDT                                |
-| Network: Tron TRC20                             |
+| Network: Ethereum ERC20                         |
 | Status: Waiting for payment                     |
 |                                                 |
 |                  [ QR CODE ]                    |
@@ -1170,7 +1281,7 @@ Ledger entry is created
 |                                                 |
 | Expires in: 14:32                               |
 |                                                 |
-| Warning: Only send USDT on Tron TRC20.          |
+| Warning: Only send USDT on Ethereum ERC20.      |
  -------------------------------------------------
 ```
 
@@ -1197,6 +1308,7 @@ Ledger entry is created
 - Do not mark invoice as paid from frontend only
 - Do not accept any token with the same symbol
 - Do not ignore network mismatch
+- Do not assume one shared address is enough for all orders
 - Do not use JavaScript floating point for money
 - Do not store private keys in localStorage
 - Do not process the same tx hash twice
@@ -1213,6 +1325,9 @@ Ledger entry is created
 - Webhooks for merchants
 - Hosted checkout page
 - Multi-network support
+- HD wallet derivation service
+- Address pool manager
+- Auto sweep from deposit addresses to treasury
 - Auto refund flow
 - Withdrawal system
 - KYC/KYB module
@@ -1242,4 +1357,3 @@ At the end, your repo should show that you understand:
 ```
 
 This is much stronger than a simple “send token” demo.
-
