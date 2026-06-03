@@ -143,7 +143,38 @@ USDT on Solana
 
 ---
 
-## 3. Product Concept
+## 3. Implementation Journey & Real EVM Integration
+
+This section documents the step-by-step technical implementation of the flows in our local Anvil environment.
+
+### Phase 1: Environment & Wallet Seeding
+Instead of relying on browser extensions like MetaMask, we deeply integrated the local `anvil` blockchain into the web UI for a seamless demo experience.
+- **Anvil HD Path (`m/44'/60'/0'/0/i`)**: We used standard derivation paths to assign roles.
+- **Customer Wallets (Accounts 1-5)**: Pre-funded with native ETH and a custom `MockUSDT` ERC20 token deployed at startup.
+- **Merchant/Admin Wallet (Account 6)**: Used for role-based access to the Merchant Portal.
+- **Company Vaults**: The **Hot Wallet** (Account 7) and **Gas Wallet** (Account 8, pre-funded with 10k ETH natively) were set up in the backend `database.service.ts` to manage revenue and fees.
+
+### Phase 2: The Customer Payment Flow
+When a customer interacts with the storefront:
+1. **Invoice Creation**: The backend generates a unique **Deposit Address** (Accounts 20+) from the Master Wallet root (`m/44'/60'/0'/0`).
+2. **On-Chain Payment**: The web UI directly instantiates an `ethers.Wallet` using the Customer's private key (derived securely in the local demo) and executes a real `MockUSDT.transfer()` to the Deposit Address.
+
+### Phase 3: Backend Blockchain Watcher
+To detect payments without WebHooks, we implemented the `BlockchainWatcherService`:
+- It connects to `http://127.0.0.1:8545` and subscribes to the `Transfer` events of the `MockUSDT` smart contract.
+- When an event fires, it checks if the `to` address matches any `ASSIGNED` Deposit Address in the database.
+- If matched, the invoice is marked as `DETECTED`.
+- **Confirmation Mocking**: For demo speed, instead of waiting for real blocks, `payments.service.ts` uses an interval to tick up block confirmations every 4 seconds until the payment is `CONFIRMED` and the invoice becomes `PAID`.
+
+### Phase 4: Gas Top-Up & Sweeping (Real EVM)
+The final step replaces mocked sweeps with real on-chain fund routing in `wallets.service.ts`:
+1. **Gas Top-Up**: Since Deposit Addresses start with 0 ETH, they can't pay gas to move the USDT. The backend instantiates the **Gas Wallet**, signs a transaction, and sends `0.01 ETH` to the Deposit Address.
+2. **Sweeping**: Once the gas arrives, the backend instantiates a wallet using the **Deposit Address's** private key, and calls `MockUSDT.transfer()` to send the entire USDT balance to the **Hot Wallet**.
+3. **Database Cleanup**: All fake seeded sweeps were removed from the initial database logic, ensuring the Admin Portal only reflects 100% genuine on-chain Tx Hashes.
+
+---
+
+## 4. Product Concept
 
 ### Product Name Ideas
 

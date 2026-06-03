@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
@@ -63,133 +63,16 @@ export class DatabaseService implements OnModuleInit {
       index: 0,
       invoiceId: null
     });
-    const globexDepositAddress = this.makeDepositAddress({
-      merchantId: merchant.id,
-      parentVaultId: erc20MasterVault.id,
-      network: "ERC20",
-      index: 1,
-      invoiceId: null
-    });
-    const initechDepositAddress = this.makeDepositAddress({
-      merchantId: merchant.id,
-      parentVaultId: erc20MasterVault.id,
-      network: "ERC20",
-      index: 2,
-      invoiceId: null
-    });
-
     this.db = {
       merchants: [merchant],
       walletVaults,
-      depositAddresses: [acmeDepositAddress, globexDepositAddress, initechDepositAddress],
+      depositAddresses: [acmeDepositAddress],
       invoices: [],
       deposits: [],
       ledger: [],
       sweeps: [],
       gasTopUps: []
     };
-
-    const paidInvoice = this.createInvoiceRecord({
-      merchantId: merchant.id,
-      invoiceNumber: "INV-LOCAL-0001",
-      customerName: "Acme Corp",
-      customerEmail: "finance@acme.local",
-      amountCents: 125000,
-      network: "ERC20",
-      description: "Website development services",
-      paymentAddress: acmeDepositAddress.address,
-      status: "PAID",
-      expiresAt: new Date(Date.now() + 45 * 60_000).toISOString(),
-      paidAt: new Date(Date.now() - 30 * 60_000).toISOString(),
-      detectedAmountCents: 125000
-    });
-
-    const waitingInvoice = this.createInvoiceRecord({
-      merchantId: merchant.id,
-      invoiceNumber: "INV-LOCAL-0002",
-      customerName: "Globex Ltd",
-      customerEmail: "ops@globex.local",
-      amountCents: 350000,
-      network: "ERC20",
-      description: "Subscription renewal",
-      paymentAddress: globexDepositAddress.address,
-      status: "WAITING_PAYMENT",
-      expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
-      paidAt: null,
-      detectedAmountCents: 0
-    });
-
-    const expiredInvoice = this.createInvoiceRecord({
-      merchantId: merchant.id,
-      invoiceNumber: "INV-LOCAL-0003",
-      customerName: "Initech",
-      customerEmail: "billing@initech.local",
-      amountCents: 89000,
-      network: "ERC20",
-      description: "Consulting engagement",
-      paymentAddress: initechDepositAddress.address,
-      status: "EXPIRED",
-      expiresAt: new Date(Date.now() - 10 * 60_000).toISOString(),
-      paidAt: null,
-      detectedAmountCents: 0
-    });
-
-    this.assignDepositAddress(acmeDepositAddress.id, paidInvoice.id);
-    this.assignDepositAddress(globexDepositAddress.id, waitingInvoice.id);
-    this.assignDepositAddress(initechDepositAddress.id, expiredInvoice.id);
-    this.creditDepositAddress(acmeDepositAddress.address, paidInvoice.amountCents, createdAt);
-
-    const paidDeposit: DepositRecord = {
-      id: randomUUID(),
-      invoiceId: paidInvoice.id,
-      network: paidInvoice.network,
-      txHash: "0xseed-invoice-paid",
-      fromAddress: "0xseededpayer",
-      toAddress: paidInvoice.paymentAddress,
-      amountCents: paidInvoice.amountCents,
-      confirmations: Number(process.env.MIN_CONFIRMATIONS_LOCAL ?? 3),
-      status: "CONFIRMED",
-      detectedAt: createdAt,
-      confirmedAt: createdAt,
-      rawPayload: JSON.stringify({ simulated: true, seeded: true })
-    };
-
-    const ledgerEntry: LedgerEntryRecord = {
-      id: randomUUID(),
-      merchantId: merchant.id,
-      invoiceId: paidInvoice.id,
-      entryType: "DEPOSIT",
-      amountCents: paidInvoice.amountCents,
-      asset: "USDT",
-      network: paidInvoice.network,
-      direction: "CREDIT",
-      status: "POSTED",
-      createdAt
-    };
-
-    const hotVault = walletVaults.find((vault) => vault.type === "HOT" && vault.network === paidInvoice.network)!;
-    const sweep: SweepRecord = {
-      id: randomUUID(),
-      merchantId: merchant.id,
-      invoiceId: paidInvoice.id,
-      depositAddressId: acmeDepositAddress.id,
-      fromAddress: paidInvoice.paymentAddress,
-      toVaultId: hotVault.id,
-      toAddress: hotVault.address,
-      network: paidInvoice.network,
-      amountCents: paidInvoice.amountCents,
-      status: "COMPLETED",
-      txHash: "0xsweepseed0001",
-      createdAt,
-      completedAt: createdAt
-    };
-    this.markDepositAddressSwept(acmeDepositAddress.id, createdAt);
-
-    this.db.invoices = [paidInvoice, waitingInvoice, expiredInvoice];
-    this.db.deposits = [paidDeposit];
-    this.db.ledger = [ledgerEntry];
-    this.db.sweeps = [sweep];
-    this.db.gasTopUps = [];
 
     await this.persist();
   }
@@ -522,6 +405,14 @@ export class DatabaseService implements OnModuleInit {
 
   private makeWalletVaults(merchant: MerchantRecord): WalletVaultRecord[] {
     const createdAt = nowIso();
+    const mnemonic = process.env.WALLET_MNEMONIC || "test test test test test test test test test test test junk";
+    
+    // Derived from m/44'/60'/0'/0/7
+    const hotNode = ethers.HDNodeWallet.fromPhrase(mnemonic, "", "m/44'/60'/0'/0/7");
+    
+    // Derived from m/44'/60'/0'/0/8
+    const gasNode = ethers.HDNodeWallet.fromPhrase(mnemonic, "", "m/44'/60'/0'/0/8");
+
     return [
       {
         id: randomUUID(),
@@ -530,7 +421,7 @@ export class DatabaseService implements OnModuleInit {
         type: "MASTER",
         label: "ERC20 Master Wallet",
         address: "0x1000000000000000000000000000000000000001",
-        derivationRoot: "m/44'/60'/0'",
+        derivationRoot: "m/44'/60'/0'/0", // Base path for deposit addresses (will append /index)
         nativeBalance: 0,
         createdAt,
         updatedAt: createdAt
@@ -541,8 +432,8 @@ export class DatabaseService implements OnModuleInit {
         network: "ERC20",
         type: "HOT",
         label: "ERC20 Hot Wallet",
-        address: "0x1000000000000000000000000000000000000010",
-        derivationRoot: null,
+        address: hotNode.address,
+        derivationRoot: "m/44'/60'/0'/0/7",
         nativeBalance: 0,
         createdAt,
         updatedAt: createdAt
@@ -553,9 +444,9 @@ export class DatabaseService implements OnModuleInit {
         network: "ERC20",
         type: "GAS",
         label: "ERC20 Gas Wallet",
-        address: "0x1000000000000000000000000000000000000020",
-        derivationRoot: null,
-        nativeBalance: 100,
+        address: gasNode.address,
+        derivationRoot: "m/44'/60'/0'/0/8",
+        nativeBalance: 10000 * 10**18, // 10,000 ETH natively funded by Anvil
         createdAt,
         updatedAt: createdAt
       }

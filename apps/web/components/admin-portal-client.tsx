@@ -4,10 +4,16 @@ import { useEffect, useState } from "react";
 import { apiGet } from "../lib/api";
 
 type WalletOverview = {
-  walletSystem: Array<{ id: string; network: string; type: string; label: string; address: string; nativeBalance: number }>;
+  walletSystem: Array<{ id: string; network: string; type: string; label: string; address: string; nativeBalance: number; usdtBalance?: number }>;
   depositPool: Array<{ id: string; address: string; status: string; invoiceId: string | null; balanceCents: number; nativeBalance: number }>;
-  gasTopUps: Array<{ invoiceId: string; fromAddress: string; toAddress: string; txHash: string; status: string }>;
-  sweepSummary: Array<{ invoiceId: string; fromAddress: string; toAddress: string; txHash: string; status: string }>;
+  gasTopUps: Array<{ invoiceId: string; fromAddress: string; toAddress: string; txHash: string; status: string; nativeAmount: number }>;
+  sweepSummary: Array<{ invoiceId: string; fromAddress: string; toAddress: string; txHash: string; status: string; amountCents: number }>;
+};
+
+const shorten = (str: string) => {
+  if (!str) return "";
+  if (str.length < 12) return str;
+  return `${str.substring(0, 6)}...${str.substring(str.length - 4)}`;
 };
 
 export function AdminPortalClient() {
@@ -40,6 +46,7 @@ export function AdminPortalClient() {
               <tr>
                 <th>Role</th>
                 <th>Address</th>
+                <th>USDT balance</th>
                 <th>Native balance</th>
               </tr>
             </thead>
@@ -47,8 +54,9 @@ export function AdminPortalClient() {
               {(overview?.walletSystem ?? []).map((vault) => (
                 <tr key={vault.id}>
                   <td>{vault.type}</td>
-                  <td className="mono">{vault.address}</td>
-                  <td>{vault.nativeBalance}</td>
+                  <td className="mono" title={vault.address}>{shorten(vault.address)}</td>
+                  <td style={{ fontWeight: 600, color: "var(--primary)" }}>{vault.usdtBalance?.toFixed(2) ?? "0.00"}</td>
+                  <td>{vault.nativeBalance > 0 ? (vault.nativeBalance / 1e18).toString() + " ETH" : "0 ETH"}</td>
                 </tr>
               ))}
             </tbody>
@@ -68,7 +76,9 @@ export function AdminPortalClient() {
             <tbody>
               {(overview?.depositPool ?? []).map((address) => (
                 <tr key={address.id}>
-                  <td className="mono">{address.address}</td>
+                  <td className="mono" title={address.address}>
+                    {shorten(address.address)}
+                  </td>
                   <td>{address.status}</td>
                   <td>{(address.balanceCents / 100).toFixed(2)}</td>
                 </tr>
@@ -88,6 +98,7 @@ export function AdminPortalClient() {
               <thead>
                 <tr>
                   <th>Invoice</th>
+                  <th>Amount</th>
                   <th>From</th>
                   <th>To</th>
                   <th>Tx hash</th>
@@ -97,9 +108,10 @@ export function AdminPortalClient() {
                 {overview?.gasTopUps.map((item) => (
                   <tr key={item.txHash}>
                     <td>{item.invoiceId}</td>
-                    <td className="mono">{item.fromAddress}</td>
-                    <td className="mono">{item.toAddress}</td>
-                    <td className="mono">{item.txHash}</td>
+                    <td style={{ fontWeight: 600 }}>{item.nativeAmount > 0 ? (item.nativeAmount / 1e18).toString() + " ETH" : "0 ETH"}</td>
+                    <td className="mono" title={item.fromAddress}>{shorten(item.fromAddress)}</td>
+                    <td className="mono" title={item.toAddress}>{shorten(item.toAddress)}</td>
+                    <td className="mono" title={item.txHash}>{shorten(item.txHash)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -116,6 +128,7 @@ export function AdminPortalClient() {
               <thead>
                 <tr>
                   <th>Invoice</th>
+                  <th>Amount</th>
                   <th>From</th>
                   <th>To</th>
                   <th>Tx hash</th>
@@ -125,9 +138,10 @@ export function AdminPortalClient() {
                 {overview?.sweepSummary.map((item) => (
                   <tr key={item.txHash}>
                     <td>{item.invoiceId}</td>
-                    <td className="mono">{item.fromAddress}</td>
-                    <td className="mono">{item.toAddress}</td>
-                    <td className="mono">{item.txHash}</td>
+                    <td style={{ fontWeight: 600, color: "var(--primary)" }}>{(item.amountCents / 100).toFixed(2)} USDT</td>
+                    <td className="mono" title={item.fromAddress}>{shorten(item.fromAddress)}</td>
+                    <td className="mono" title={item.toAddress}>{shorten(item.toAddress)}</td>
+                    <td className="mono" title={item.txHash}>{shorten(item.txHash)}</td>
                   </tr>
                 ))}
               </tbody>

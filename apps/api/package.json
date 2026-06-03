@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"nest build --watch\" \"sh -c 'until [ -f dist/apps/api/src/main.js ]; do sleep 1; done; node --watch dist/apps/api/src/main.js'\"",
+    "dev": "nest start --watch --entryFile apps/api/src/main",
     "build": "nest build",
     "start": "node dist/apps/api/src/main.js",
     "seed": "tsx src/modules/database/seed.ts",

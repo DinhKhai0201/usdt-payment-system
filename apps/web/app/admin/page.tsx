@@ -5,7 +5,7 @@ import { RoleGate } from "../../components/role-gate";
 export default function AdminPortalPage() {
   return (
     <AppShell>
-      <RoleGate role="admin">
+      <RoleGate role="merchant">
         <AdminPortalClient />
       </RoleGate>
     </AppShell>

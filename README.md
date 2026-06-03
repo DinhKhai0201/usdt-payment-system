@@ -21,19 +21,33 @@ Local-first learning project for a USDT payment system, based on the roadmap in 
 ## Payment Architecture
 
 This project now follows the practical gateway model used by most crypto payment systems:
+## Payment Architecture & Wallet Roles
 
-1. The platform controls a wallet system, usually HD-wallet based.
-2. Each invoice gets a unique deposit address derived from that wallet system.
-3. The customer sends USDT directly to that address.
-4. The backend watcher listens for token transfers to known deposit addresses.
-5. The system matches `to_address + network + token contract + amount + confirmations` to the invoice.
-6. Later, funds can be swept from deposit addresses to an operator hot wallet.
+To keep customer funds secure and manage transaction fees efficiently, the system uses a standard cryptocurrency exchange sweeping architecture. Below is the list of wallet roles in the order of their involvement in the flow, mapped directly to the local `anvil` test accounts (which use the standard `m/44'/60'/0'/0/i` derivation path):
 
-Important clarification:
+1. **Customer Wallets (Anvil Accounts 1 - 5)**
+   - **Role:** The buyers' personal wallets.
+   - **Usage:** Pre-funded with MockUSDT and ETH. Used to browse the storefront and pay invoices.
 
-- The customer still transfers USDT through the USDT token contract on-chain.
-- But the payment product does not need to deploy its own custom smart contract for the normal invoice flow.
-- The unique deposit address is what helps identify which invoice was paid.
+2. **System Admin / Merchant Wallet (Anvil Account 6)**
+   - **Role:** The store owner's wallet.
+   - **Usage:** Used to log into the Merchant Portal to view revenue and track sweeping status.
+
+3. **Master Wallet (`MASTER`)**
+   - **Role:** The root HD wallet inside the backend.
+   - **Usage:** Its derivation path (`m/44'/60'/0'/0`) is used to mathematically generate an infinite number of unique child addresses without interacting with the blockchain.
+
+4. **Deposit Address (Anvil Accounts 20+)**
+   - **Role:** A unique, disposable address generated for a single invoice.
+   - **Usage:** The customer sends their USDT to this address. This allows the backend to precisely identify which invoice was paid. However, this address starts with 0 ETH, meaning it cannot pay the network fee (Gas) required to move the USDT out.
+
+5. **Hot Wallet (`HOT` - Anvil Account 7)**
+   - **Role:** The company's central revenue vault.
+   - **Usage:** Safely stores all the incoming swept USDT revenue from all customers.
+
+6. **Gas Wallet (`GAS` - Anvil Account 8)**
+   - **Role:** The company's centralized "fuel" wallet, pre-funded natively by Anvil with 10,000 ETH.
+   - **Usage:** Once a Deposit Address receives USDT, the Gas Wallet automatically sends a tiny fraction of ETH (Gas Top-up) to that Deposit Address. The Deposit Address then instantly executes an ERC20 `transfer` (Sweeping) to send the entire USDT balance to the Hot Wallet.
 
 ## 1. Local Run
 

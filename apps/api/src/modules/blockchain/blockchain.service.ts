@@ -11,8 +11,8 @@ const ERC20_ABI = [
 @Injectable()
 export class BlockchainWatcherService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(BlockchainWatcherService.name);
-  private provider: ethers.JsonRpcProvider;
-  private contract: ethers.Contract;
+  private provider!: ethers.JsonRpcProvider;
+  private contract!: ethers.Contract;
 
   constructor(
     private readonly databaseService: DatabaseService,

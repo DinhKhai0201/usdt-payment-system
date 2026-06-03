@@ -30,6 +30,37 @@ export function HomeClient() {
     }
   }
 
+  const [balances, setBalances] = useState<Record<string, { eth: string; usdt: string }>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+    import("ethers").then(({ ethers }) => {
+      const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
+      const MockUSDTAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+      const contract = new ethers.Contract(MockUSDTAddress, ["function balanceOf(address) view returns (uint256)"], provider);
+      
+      const fetchAllBalances = async () => {
+        const newBalances: Record<string, { eth: string; usdt: string }> = {};
+        for (const wallet of SYSTEM_WALLETS) {
+          try {
+            const eth = await provider.getBalance(wallet.address);
+            const usdt = await contract.balanceOf(wallet.address);
+            newBalances[wallet.address] = {
+              eth: (Number(eth) / 1e18).toFixed(4),
+              usdt: (Number(usdt) / 1e6).toFixed(2),
+            };
+          } catch (e) {
+            console.error("Failed to fetch balance for", wallet.address);
+          }
+        }
+        if (isMounted) setBalances(newBalances);
+      };
+
+      fetchAllBalances();
+    });
+    return () => { isMounted = false; };
+  }, []);
+
   const customers = SYSTEM_WALLETS.filter((w) => w.role === "customer");
   const merchants = SYSTEM_WALLETS.filter((w) => w.role === "merchant");
 
@@ -66,6 +97,12 @@ export function HomeClient() {
                   <div className="mono muted" style={{ fontSize: "0.8rem", marginTop: 4 }}>
                     {wallet.address.slice(0, 8)}...{wallet.address.slice(-6)}
                   </div>
+                  {balances[wallet.address] && (
+                    <div style={{ display: "flex", gap: 12, marginTop: 8, fontSize: "0.8rem" }}>
+                      <span style={{ color: "var(--primary)", fontWeight: 600 }}>{balances[wallet.address].usdt} USDT</span>
+                      <span className="muted">{balances[wallet.address].eth} ETH</span>
+                    </div>
+                  )}
                 </div>
                 <button className="btn btn-primary" style={{ padding: "6px 12px", fontSize: "0.85rem" }}>
                   Select
@@ -97,6 +134,12 @@ export function HomeClient() {
                   <div className="mono muted" style={{ fontSize: "0.8rem", marginTop: 4 }}>
                     {wallet.address.slice(0, 8)}...{wallet.address.slice(-6)}
                   </div>
+                  {balances[wallet.address] && (
+                    <div style={{ display: "flex", gap: 12, marginTop: 8, fontSize: "0.8rem" }}>
+                      <span style={{ color: "var(--primary)", fontWeight: 600 }}>{balances[wallet.address].usdt} USDT</span>
+                      <span className="muted">{balances[wallet.address].eth} ETH</span>
+                    </div>
+                  )}
                 </div>
                 <button className="btn btn-secondary" style={{ padding: "6px 12px", fontSize: "0.85rem" }}>
                   Login

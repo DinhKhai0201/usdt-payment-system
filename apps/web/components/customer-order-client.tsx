@@ -3,6 +3,7 @@
 import type { CheckoutInvoice } from "@payflow/shared";
 import { Copy, RefreshCcw, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 import { apiGet } from "../lib/api";
 import { readSession } from "../lib/demo-wallet";
 import { ethers } from "ethers";
@@ -47,7 +48,8 @@ export function CustomerOrderClient({ invoiceId }: { invoiceId: string }) {
     if (!invoice || !session?.privateKey) return;
     setBusy(true);
     setError(null);
-    try {
+    
+    const paymentPromise = (async () => {
       const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
       const wallet = new ethers.Wallet(session.privateKey, provider);
       const contract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, wallet);
@@ -57,6 +59,16 @@ export function CustomerOrderClient({ invoiceId }: { invoiceId: string }) {
       await tx.wait(); // wait for confirmation
       
       await refresh();
+    })();
+
+    toast.promise(paymentPromise, {
+      loading: 'Broadcasting EVM transaction...',
+      success: 'USDT transferred successfully!',
+      error: (err) => err.message || "Payment failed",
+    });
+
+    try {
+      await paymentPromise;
     } catch (err: any) {
       setError(err.message || "Payment failed");
     } finally {
