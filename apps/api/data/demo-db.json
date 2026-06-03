@@ -1,0 +1,203 @@
+{
+  "merchants": [
+    {
+      "id": "15189281-d4cc-4097-ad57-83e4fdbcd091",
+      "name": "PayFlow Studio",
+      "email": "merchant@payflow.local",
+      "createdAt": "2026-06-03T09:47:44.303Z",
+      "updatedAt": "2026-06-03T09:47:44.303Z"
+    }
+  ],
+  "walletVaults": [
+    {
+      "id": "96dad8f0-cfbe-4b24-8c8e-9a3ed4b3de79",
+      "merchantId": "15189281-d4cc-4097-ad57-83e4fdbcd091",
+      "network": "ERC20",
+      "type": "MASTER",
+      "label": "ERC20 Master Wallet",
+      "address": "0x1000000000000000000000000000000000000001",
+      "derivationRoot": "m/44'/60'/0'/0",
+      "nativeBalance": 0,
+      "createdAt": "2026-06-03T09:47:44.303Z",
+      "updatedAt": "2026-06-03T09:47:44.303Z"
+    },
+    {
+      "id": "1fcc5433-002f-449f-a99a-fe554afd12cb",
+      "merchantId": "15189281-d4cc-4097-ad57-83e4fdbcd091",
+      "network": "ERC20",
+      "type": "HOT",
+      "label": "ERC20 Hot Wallet",
+      "address": "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955",
+      "derivationRoot": "m/44'/60'/0'/0/7",
+      "nativeBalance": 0,
+      "createdAt": "2026-06-03T09:47:44.303Z",
+      "updatedAt": "2026-06-03T09:47:44.303Z"
+    },
+    {
+      "id": "bf1e8e4d-6f7a-4982-a473-3ed96b3d82d6",
+      "merchantId": "15189281-d4cc-4097-ad57-83e4fdbcd091",
+      "network": "ERC20",
+      "type": "GAS",
+      "label": "ERC20 Gas Wallet",
+      "address": "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f",
+      "derivationRoot": "m/44'/60'/0'/0/8",
+      "nativeBalance": 9.99999e+21,
+      "createdAt": "2026-06-03T09:47:44.303Z",
+      "updatedAt": "2026-06-03T09:48:12.477Z"
+    }
+  ],
+  "depositAddresses": [
+    {
+      "id": "e18cfcae-36e3-444b-abbc-def0846dc635",
+      "merchantId": "15189281-d4cc-4097-ad57-83e4fdbcd091",
+      "invoiceId": "88c008d8-a67a-419e-9d93-f32d936d8d60",
+      "parentVaultId": "96dad8f0-cfbe-4b24-8c8e-9a3ed4b3de79",
+      "network": "ERC20",
+      "address": "0x09DB0a93B389bEF724429898f539AEB7ac2Dd55f",
+      "derivationPath": "m/44'/60'/0'/0/20",
+      "index": 0,
+      "status": "SWEPT",
+      "assignedAt": "2026-06-03T09:47:56.851Z",
+      "fundedAt": "2026-06-03T09:48:00.487Z",
+      "sweptAt": "2026-06-03T09:48:12.563Z",
+      "balanceCents": 0,
+      "nativeBalance": 0,
+      "createdAt": "2026-06-03T09:47:44.348Z",
+      "updatedAt": "2026-06-03T09:48:12.563Z"
+    },
+    {
+      "id": "70d4e7c4-4b61-4481-a664-271459b5d0a0",
+      "merchantId": "15189281-d4cc-4097-ad57-83e4fdbcd091",
+      "invoiceId": "1113a2cb-f738-4e79-8b2b-13a9aa72664d",
+      "parentVaultId": "96dad8f0-cfbe-4b24-8c8e-9a3ed4b3de79",
+      "network": "ERC20",
+      "address": "0x02484cb50AAC86Eae85610D6f4Bf026f30f6627D",
+      "derivationPath": "m/44'/60'/0'/0/21",
+      "index": 1,
+      "status": "FUNDED",
+      "assignedAt": "2026-06-03T09:50:22.393Z",
+      "fundedAt": "2026-06-03T09:50:29.119Z",
+      "sweptAt": null,
+      "balanceCents": 999,
+      "nativeBalance": 0,
+      "createdAt": "2026-06-03T09:50:22.383Z",
+      "updatedAt": "2026-06-03T09:50:29.119Z"
+    }
+  ],
+  "invoices": [
+    {
+      "id": "1113a2cb-f738-4e79-8b2b-13a9aa72664d",
+      "invoiceNumber": "INV-20260603-0002",
+      "customerName": "Customer Wallet 1",
+      "customerEmail": "0x709979@wallet.demo",
+      "amountCents": 999,
+      "asset": "USDT",
+      "network": "ERC20",
+      "description": "Growth Retainer",
+      "paymentAddress": "0x02484cb50AAC86Eae85610D6f4Bf026f30f6627D",
+      "status": "CONFIRMING",
+      "expiresAt": "2026-06-03T10:20:22.380Z",
+      "createdAt": "2026-06-03T09:50:22.380Z",
+      "updatedAt": "2026-06-03T09:50:29.119Z",
+      "paidAt": null,
+      "merchantId": "15189281-d4cc-4097-ad57-83e4fdbcd091",
+      "detectedAmountCents": 999
+    },
+    {
+      "id": "88c008d8-a67a-419e-9d93-f32d936d8d60",
+      "invoiceNumber": "INV-20260603-0001",
+      "customerName": "Customer Wallet 1",
+      "customerEmail": "0x709979@wallet.demo",
+      "amountCents": 500,
+      "asset": "USDT",
+      "network": "ERC20",
+      "description": "Website Launch Package",
+      "paymentAddress": "0x09DB0a93B389bEF724429898f539AEB7ac2Dd55f",
+      "status": "PAID",
+      "expiresAt": "2026-06-03T10:17:56.849Z",
+      "createdAt": "2026-06-03T09:47:56.850Z",
+      "updatedAt": "2026-06-03T09:48:12.363Z",
+      "paidAt": "2026-06-03T09:48:12.363Z",
+      "merchantId": "15189281-d4cc-4097-ad57-83e4fdbcd091",
+      "detectedAmountCents": 500
+    }
+  ],
+  "deposits": [
+    {
+      "id": "b62e3ea9-8748-4874-b0c8-548e13e2705e",
+      "detectedAt": "2026-06-03T09:50:29.117Z",
+      "confirmedAt": null,
+      "invoiceId": "1113a2cb-f738-4e79-8b2b-13a9aa72664d",
+      "network": "ERC20",
+      "txHash": "0x46b9a9121c0c9bd6e9cbf9a55a537fc3dd38ce0b15a5dba088cfc264454ebb32",
+      "fromAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "toAddress": "0x02484cb50AAC86Eae85610D6f4Bf026f30f6627D",
+      "amountCents": 999,
+      "confirmations": 0,
+      "status": "DETECTED",
+      "rawPayload": "{\"simulated\":true,\"createdAt\":\"2026-06-03T09:50:29.117Z\"}"
+    },
+    {
+      "id": "c23c656f-fcb7-4271-93d5-5cc7f36c16f6",
+      "detectedAt": "2026-06-03T09:48:00.486Z",
+      "confirmedAt": "2026-06-03T09:48:12.361Z",
+      "invoiceId": "88c008d8-a67a-419e-9d93-f32d936d8d60",
+      "network": "ERC20",
+      "txHash": "0x08b3178b8ca959f2c5807baf71bf6b76f7908dfb549b9c800acfca8eb505ff00",
+      "fromAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "toAddress": "0x09DB0a93B389bEF724429898f539AEB7ac2Dd55f",
+      "amountCents": 500,
+      "confirmations": 3,
+      "status": "CONFIRMED",
+      "rawPayload": "{\"simulated\":true,\"createdAt\":\"2026-06-03T09:48:00.486Z\"}"
+    }
+  ],
+  "ledger": [
+    {
+      "id": "ac8392a1-504f-4996-bca3-ba3e8e5f6f7f",
+      "createdAt": "2026-06-03T09:48:12.365Z",
+      "merchantId": "15189281-d4cc-4097-ad57-83e4fdbcd091",
+      "invoiceId": "88c008d8-a67a-419e-9d93-f32d936d8d60",
+      "entryType": "DEPOSIT",
+      "amountCents": 500,
+      "asset": "USDT",
+      "network": "ERC20",
+      "direction": "CREDIT",
+      "status": "POSTED"
+    }
+  ],
+  "sweeps": [
+    {
+      "id": "79c9845f-69f7-441e-a4da-3a2a1559083f",
+      "createdAt": "2026-06-03T09:48:12.563Z",
+      "completedAt": "2026-06-03T09:48:12.563Z",
+      "merchantId": "15189281-d4cc-4097-ad57-83e4fdbcd091",
+      "invoiceId": "88c008d8-a67a-419e-9d93-f32d936d8d60",
+      "depositAddressId": "e18cfcae-36e3-444b-abbc-def0846dc635",
+      "fromAddress": "0x09DB0a93B389bEF724429898f539AEB7ac2Dd55f",
+      "toVaultId": "1fcc5433-002f-449f-a99a-fe554afd12cb",
+      "toAddress": "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955",
+      "network": "ERC20",
+      "amountCents": 500,
+      "status": "COMPLETED",
+      "txHash": "0x36badc15b63102561f98cc7d1fb3977bbdf3790ef81346545d70de09b123949d"
+    }
+  ],
+  "gasTopUps": [
+    {
+      "id": "11379d80-e818-4508-9d5c-b2e5e02b1167",
+      "createdAt": "2026-06-03T09:48:12.476Z",
+      "completedAt": "2026-06-03T09:48:12.477Z",
+      "merchantId": "15189281-d4cc-4097-ad57-83e4fdbcd091",
+      "invoiceId": "88c008d8-a67a-419e-9d93-f32d936d8d60",
+      "depositAddressId": "e18cfcae-36e3-444b-abbc-def0846dc635",
+      "fromVaultId": "bf1e8e4d-6f7a-4982-a473-3ed96b3d82d6",
+      "fromAddress": "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f",
+      "toAddress": "0x09DB0a93B389bEF724429898f539AEB7ac2Dd55f",
+      "network": "ERC20",
+      "nativeAmount": 10000000000000000,
+      "status": "COMPLETED",
+      "txHash": "0x55e57da4c10b8e4a9395630ff5ae36ed11e4556ca091468349475e83dcb4dd6a"
+    }
+  ]
+}

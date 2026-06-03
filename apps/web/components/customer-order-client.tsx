@@ -121,9 +121,9 @@ export function CustomerOrderClient({ invoiceId }: { invoiceId: string }) {
               )}
 
               <div style={{ display: "flex", gap: 12, marginTop: 18 }}>
-                <button className="btn btn-primary" disabled={busy || paymentReady} onClick={submitPayment}>
+                <button className="btn btn-primary" disabled={busy || (invoice.status !== "WAITING_PAYMENT" && invoice.status !== "EXPIRED" && !paymentReady) || paymentReady} onClick={submitPayment}>
                   <Wallet size={16} style={{ verticalAlign: "middle", marginRight: 8 }} />
-                  {busy ? "Processing EVM Tx..." : `Pay as ${session.name}`}
+                  {paymentReady ? "Payment Completed" : busy || (invoice.status !== "WAITING_PAYMENT" && invoice.status !== "EXPIRED" && !paymentReady) ? "Processing via System..." : `Pay as ${session.name}`}
                 </button>
                 <button className="btn btn-secondary" onClick={() => void refresh()}>
                   <RefreshCcw size={16} style={{ verticalAlign: "middle", marginRight: 8 }} />
